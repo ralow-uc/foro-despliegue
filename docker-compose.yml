@@ -63,7 +63,7 @@ services:
       - foro-temas
 
   foro-web:
-    image: ${DOCKERHUB_USUARIO}/foro-web:${VERSION_WEB:-1.0.0}
+    image: ${DOCKERHUB_USUARIO}/foro-web:${VERSION_WEB:-1.0.1}
     container_name: foro-web
     restart: unless-stopped
     ports:

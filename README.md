@@ -7,7 +7,7 @@ la base de datos en **Oracle Cloud**.
 
 | Componente | Imagen | Puerto | Repositorio |
 |---|---|---|---|
-| Frontend Angular + nginx | `<usuario>/foro-web:1.0.0` | 80 | `foro-web` |
+| Frontend Angular + nginx | `<usuario>/foro-web:1.0.1` | 80 | `foro-web` |
 | Usuarios e inicio de sesión | `<usuario>/foro-usuarios:2.0.0` | 8081 | `foro-usuarios` |
 | Foro: temas y comentarios | `<usuario>/foro-temas:2.0.0` | 8082 | `foro-temas` |
 | Moderación | `<usuario>/foro-moderacion:1.0.1` | 8083 | `foro-moderacion` |
