@@ -1,0 +1,12 @@
+# Sobrescritura para construir las imagenes desde el codigo fuente, con los
+# repositorios clonados uno al lado del otro:
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+services:
+  foro-usuarios:
+    build: ../foro-usuarios
+  foro-temas:
+    build: ../foro-temas
+  foro-moderacion:
+    build: ../foro-moderacion
+  foro-web:
+    build: ../foro-web
