@@ -1,0 +1,50 @@
+Verificacion del despliegue con Docker Compose  (2026-11-17 18:32)
+Imagenes construidas desde el codigo (docker-compose.build.yml), PERFIL=local (H2).
+Oracle Cloud estaba detenida por inactividad; la corrida con PERFIL=oracle queda pendiente.
+
+== docker compose ps
+NAME              IMAGE                         STATUS          PORTS
+foro-moderacion   local/foro-moderacion:1.0.1   Up 19 seconds   0.0.0.0:8083->8083/tcp, [::]:8083->8083/tcp
+foro-temas        local/foro-temas:2.0.0        Up 19 seconds   0.0.0.0:8082->8082/tcp, [::]:8082->8082/tcp
+foro-usuarios     local/foro-usuarios:2.0.0     Up 19 seconds   0.0.0.0:8081->8081/tcp, [::]:8081->8081/tcp
+foro-web          local/foro-web:1.0.0          Up 19 seconds   0.0.0.0:80->80/tcp, [::]:80->80/tcp
+
+== Usuario de los contenedores Java (sin privilegios)
+foro-usuarios: uid=999(app) gid=999(app) groups=999(app)
+foro-temas: uid=999(app) gid=999(app) groups=999(app)
+foro-moderacion: uid=999(app) gid=999(app) groups=999(app)
+
+== Frontend (nginx, fallback de la SPA)
+GET / -> 200
+GET /login -> 200
+GET /temas/3 -> 200
+GET /admin/usuarios -> 200
+
+== Estado de los microservicios
+foro-usuarios OK - H2 2.3.232 (2024-08-11)
+foro-temas OK - H2 2.3.232 (2024-08-11)
+foro-moderacion OK - H2 2.3.232 (2024-08-11)
+
+== Coleccion de Postman (newman) contra los contenedores
+┌─────────────────────────┬───────────────────┬──────────────────┐
+│                         │          executed │           failed │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              iterations │                 1 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│                requests │                60 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│            test-scripts │                60 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│      prerequest-scripts │                 1 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              assertions │               108 │                0 │
+├─────────────────────────┴───────────────────┴──────────────────┤
+│ total run duration: 2.6s                                       │
+├────────────────────────────────────────────────────────────────┤
+│ total data received: 26.18kB (approx)                          │
+├────────────────────────────────────────────────────────────────┤
+│ average response time: 29ms [min: 3ms, max: 251ms, s.d.: 39ms] │
+└────────────────────────────────────────────────────────────────┘
+
+== foro-temas detenido: banear responde 503
+POST /api/sanciones -> HTTP 503

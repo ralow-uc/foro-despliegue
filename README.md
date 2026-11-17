@@ -138,10 +138,12 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 
 ## 5. Verificación realizada
 
-Con las imágenes construidas desde el código y `PERFIL=local`
-(ver `docs/registros/`):
+Con las cuatro imágenes construidas desde el código y `PERFIL=local`
+(ver [`docs/registros/01_verificacion_docker_compose.txt`](docs/registros/01_verificacion_docker_compose.txt)):
 
-- Los tres servicios arrancan como usuario sin privilegios (`uid=999(app)`).
+- Los cuatro contenedores levantan juntos; el frontend responde en el puerto 80
+  y nginx devuelve la SPA en cualquier ruta (`/login`, `/temas/3`, `/admin/usuarios`).
+- Los tres servicios Java corren como usuario sin privilegios (`uid=999(app)`).
 - La colección de Postman completa (60 peticiones, 108 aserciones) pasa contra
   los contenedores, incluida la llamada de `foro-moderacion` a
   `http://foro-temas:8082` dentro de la red de Compose.
