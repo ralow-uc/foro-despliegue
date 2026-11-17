@@ -20,7 +20,7 @@ COMPONENTES=(
   "foro-usuarios:2.0.0"
   "foro-temas:2.0.0"
   "foro-moderacion:1.0.1"
-  "foro-web:1.0.0"
+  "foro-web:1.0.1"
 )
 
 docker buildx inspect foro-multiarq >/dev/null 2>&1 || docker buildx create --name foro-multiarq --use
