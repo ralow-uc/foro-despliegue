@@ -1,22 +1,21 @@
 # ---------------------------------------------------------------------------
-#  Sistema de Foros en Linea (CuboClub) - despliegue en Docker Cloud
+#  Sistema de Foros en Linea (CuboClub) - ejecucion local con Docker Compose
 #
-#  Levanta los cuatro componentes desde las imagenes publicadas en Docker Hub:
+#  El despliegue en la nube es en Render (render.yaml). Este archivo levanta
+#  los mismos cuatro contenedores en el computador, construidos desde el codigo
+#  con los repositorios clonados uno al lado del otro:
 #    foro-web          :80    Angular + nginx (independiente del backend)
 #    foro-usuarios     :8081  cuentas, roles, login (emite el JWT)
 #    foro-temas        :8082  categorias, temas, comentarios
 #    foro-moderacion   :8083  normas, reportes, sanciones
 #
-#  Requisitos en la maquina (Play with Docker u otra):
+#  Requisitos:
 #    - archivo .env  (copiar .env.example y completar)
-#    - carpeta wallet/ con el Wallet de Oracle descomprimido (solo para PERFIL=oracle)
+#    - carpeta wallet/ con el Wallet de Oracle descomprimido (solo PERFIL=oracle)
 #
-#    docker compose up -d
+#    docker compose up -d --build
 #    docker compose ps
 #    docker compose logs -f foro-moderacion
-#
-#  Para construir las imagenes desde el codigo en vez de bajarlas:
-#    docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 # ---------------------------------------------------------------------------
 
 x-backend: &backend
@@ -37,21 +36,24 @@ x-backend: &backend
 services:
   foro-usuarios:
     <<: *backend
-    image: ${DOCKERHUB_USUARIO:?Define DOCKERHUB_USUARIO en .env}/foro-usuarios:${VERSION_USUARIOS:-2.0.0}
+    build: ../foro-usuarios
+    image: foro-usuarios:2.0.0
     container_name: foro-usuarios
     ports:
       - "8081:8081"
 
   foro-temas:
     <<: *backend
-    image: ${DOCKERHUB_USUARIO}/foro-temas:${VERSION_TEMAS:-2.0.0}
+    build: ../foro-temas
+    image: foro-temas:2.0.0
     container_name: foro-temas
     ports:
       - "8082:8082"
 
   foro-moderacion:
     <<: *backend
-    image: ${DOCKERHUB_USUARIO}/foro-moderacion:${VERSION_MODERACION:-1.0.1}
+    build: ../foro-moderacion
+    image: foro-moderacion:1.0.1
     container_name: foro-moderacion
     environment:
       <<: *entorno
@@ -63,7 +65,8 @@ services:
       - foro-temas
 
   foro-web:
-    image: ${DOCKERHUB_USUARIO}/foro-web:${VERSION_WEB:-1.0.1}
+    build: ../foro-web
+    image: foro-web:1.0.1
     container_name: foro-web
     restart: unless-stopped
     ports:
