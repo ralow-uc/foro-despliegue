@@ -21,7 +21,7 @@ ALIAS="${2:-fullstack3_tp}"
 [ -f "$WALLET/cwallet.sso" ] || { echo "No encuentro $WALLET/cwallet.sso" >&2; exit 1; }
 [ -f "$WALLET/tnsnames.ora" ] || { echo "No encuentro $WALLET/tnsnames.ora" >&2; exit 1; }
 
-DESCRIPTOR="$(grep -i "^${ALIAS}[[:space:]]*=" "$WALLET/tnsnames.ora" | sed -E 's/^[^=]*=[[:space:]]*//')"
+DESCRIPTOR="$(grep -i "^${ALIAS}[[:space:]]*=" "$WALLET/tnsnames.ora" | sed -E 's/^[^=]*=[[:space:]]*//' | tr -d '\r')"
 [ -n "$DESCRIPTOR" ] || { echo "El alias $ALIAS no esta en tnsnames.ora" >&2; exit 1; }
 
 WALLET_B64="$(base64 < "$WALLET/cwallet.sso" | tr -d '\n')"
