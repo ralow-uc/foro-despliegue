@@ -1,0 +1,89 @@
+# ---------------------------------------------------------------------------
+#  Sistema de Foros en Linea (CuboClub) - despliegue en Render (Blueprint)
+#
+#  Render construye cada imagen con el Dockerfile multi-etapa de su propio
+#  repositorio de GitHub y la ejecuta como contenedor, con una URL publica
+#  HTTPS por servicio. No hace falta un registro de imagenes aparte.
+#
+#    foro-web          Angular + nginx (independiente del backend)
+#    foro-usuarios     cuentas, roles, login (emite el JWT)
+#    foro-temas        categorias, temas, comentarios
+#    foro-moderacion   normas, reportes, sanciones (llama a foro-temas)
+#
+#  Secretos: NO se escriben aqui. Los que dicen "sync: false" se ingresan en el
+#  panel de Render al crear el Blueprint (ver README, seccion 2).
+#  El Wallet de Oracle viaja dentro de JAVA_OPTS como base64 (se genera con
+#  scripts/valores-render.sh); nunca entra a una imagen ni a un repositorio.
+# ---------------------------------------------------------------------------
+
+envVarGroups:
+  # Lo comparten los tres microservicios: misma base y mismo secreto del JWT.
+  - name: foro-oracle
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: oracle
+      - key: ORACLE_USER
+        value: FORO
+      - key: ORACLE_JDBC_URL
+        sync: false
+      - key: ORACLE_PASSWORD
+        sync: false
+      - key: JAVA_OPTS
+        sync: false
+      - key: FORO_JWT_SECRETO
+        generateValue: true
+
+services:
+  - type: web
+    name: foro-usuarios
+    runtime: docker
+    repo: https://github.com/ralow-uc/foro-usuarios
+    branch: main
+    plan: free
+    region: virginia
+    healthCheckPath: /api/estado
+    envVars:
+      - fromGroup: foro-oracle
+      - key: PORT
+        value: "8081"
+
+  - type: web
+    name: foro-temas
+    runtime: docker
+    repo: https://github.com/ralow-uc/foro-temas
+    branch: main
+    plan: free
+    region: virginia
+    healthCheckPath: /api/estado
+    envVars:
+      - fromGroup: foro-oracle
+      - key: PORT
+        value: "8082"
+
+  - type: web
+    name: foro-moderacion
+    runtime: docker
+    repo: https://github.com/ralow-uc/foro-moderacion
+    branch: main
+    plan: free
+    region: virginia
+    healthCheckPath: /api/estado
+    envVars:
+      - fromGroup: foro-oracle
+      - key: PORT
+        value: "8083"
+      # URL publica de foro-temas (Render la muestra al crear el servicio).
+      - key: FORO_TEMAS_URL
+        sync: false
+
+  - type: web
+    name: foro-web
+    runtime: docker
+    repo: https://github.com/ralow-uc/foro-web
+    branch: main
+    plan: free
+    region: virginia
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: "80"
