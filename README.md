@@ -5,12 +5,18 @@ componentes corren como **contenedores Docker en Render** (render.com),
 construidos con el Dockerfile multi-etapa de cada repositorio, con la base de
 datos en **Oracle Cloud**.
 
-| Componente | Repositorio | Versión | Puerto del contenedor |
+| Componente | URL pública | Repositorio | Versión |
 |---|---|---|---|
-| Frontend Angular + nginx | [`foro-web`](https://github.com/ralow-uc/foro-web) | 1.0.1 | 80 |
-| Usuarios e inicio de sesión | [`foro-usuarios`](https://github.com/ralow-uc/foro-usuarios) | 2.0.0 | 8081 |
-| Foro: temas y comentarios | [`foro-temas`](https://github.com/ralow-uc/foro-temas) | 2.0.0 | 8082 |
-| Moderación | [`foro-moderacion`](https://github.com/ralow-uc/foro-moderacion) | 1.0.1 | 8083 |
+| Frontend Angular + nginx | <https://foro-web-q4en.onrender.com> | [`foro-web`](https://github.com/ralow-uc/foro-web) | 1.0.1 |
+| Usuarios e inicio de sesión | <https://foro-usuarios.onrender.com> | [`foro-usuarios`](https://github.com/ralow-uc/foro-usuarios) | 2.0.0 |
+| Foro: temas y comentarios | <https://foro-temas.onrender.com> | [`foro-temas`](https://github.com/ralow-uc/foro-temas) | 2.0.0 |
+| Moderación | <https://foro-moderacion.onrender.com> | [`foro-moderacion`](https://github.com/ralow-uc/foro-moderacion) | 1.0.1 |
+
+Cada microservicio responde su estado y el motor de base de datos en
+`/api/estado` (por ejemplo <https://foro-usuarios.onrender.com/api/estado>).
+La colección de Postman se corre con el entorno
+`postman/foro-render.postman_environment.json` de cualquiera de los tres
+repositorios de microservicios.
 
 > El frontend y el backend **funcionan por separado** (así lo pide la
 > actividad): el frontend usa sus propios arreglos en memoria y el backend se
@@ -21,10 +27,10 @@ datos en **Oracle Cloud**.
         │  Render clona y construye cada Dockerfile
         ▼
  ┌──────────────────────────── Render ─────────────────────────────┐
- │  foro-web        https://foro-web-….onrender.com                │
- │  foro-usuarios   https://foro-usuarios-….onrender.com           │
- │  foro-temas      https://foro-temas-….onrender.com   ◀──┐       │
- │  foro-moderacion https://foro-moderacion-….onrender.com ─┘ HTTPS │
+ │  foro-web        https://foro-web-q4en.onrender.com             │
+ │  foro-usuarios   https://foro-usuarios.onrender.com             │
+ │  foro-temas      https://foro-temas.onrender.com      ◀──┐      │
+ │  foro-moderacion https://foro-moderacion.onrender.com ───┘ HTTPS │
  │  grupo de variables "foro-oracle": URL, usuario, contraseña,    │
  │  Wallet (base64) y secreto del JWT, compartidos por los tres    │
  └───────────────────────────────┬─────────────────────────────────┘
@@ -78,21 +84,23 @@ Los dos valores se generan con:
 
 ### Pasos
 
-1. En <https://dashboard.render.com> → **New** → **Blueprint** → repositorio
-   público `https://github.com/ralow-uc/foro-despliegue`.
-2. Render lee `render.yaml` y pide los valores marcados `sync: false`:
+1. En <https://dashboard.render.com> → **New** → **Blueprint** → *Public Git
+   Repository* → `https://github.com/ralow-uc/foro-despliegue`.
+2. Render lee `render.yaml` y pide `FORO_TEMAS_URL` (la URL pública de
+   `foro-temas`: `https://foro-temas.onrender.com`). **Deploy Blueprint** crea el
+   grupo `foro-oracle` y los cuatro servicios.
+3. En *Environment Groups* → `foro-oracle` → **Edit** → *Import from .env*, pega
+   los tres secretos (no se escriben en `render.yaml`):
 
-   | Variable | Valor |
-   |---|---|
-   | `ORACLE_JDBC_URL` | primera línea de `valores-render.sh` |
-   | `JAVA_OPTS` | segunda línea de `valores-render.sh` |
-   | `ORACLE_PASSWORD` | contraseña del esquema `FORO` |
-   | `FORO_TEMAS_URL` | URL pública de `foro-temas` (se completa después del primer despliegue) |
+   ```
+   ORACLE_JDBC_URL="…"     # primera línea de valores-render.sh
+   JAVA_OPTS="…"           # segunda línea de valores-render.sh
+   ORACLE_PASSWORD="…"     # contraseña del esquema FORO
+   ```
 
-   `FORO_JWT_SECRETO` lo genera Render al azar (`generateValue`) dentro del
-   grupo `foro-oracle`, así que los tres servicios comparten el mismo.
-3. **Apply**: Render construye las cuatro imágenes y las publica, cada una con
-   su URL HTTPS.
+   y **Save, rebuild, and deploy**: los tres microservicios se reconstruyen con
+   ellos. `FORO_JWT_SECRETO` lo genera Render al azar (`generateValue`) dentro
+   del grupo, así que los tres servicios comparten el mismo.
 4. Comprueba cada servicio: `GET /api/estado` tiene que decir
    `"motor" : "Oracle AI Database 26ai …"`.
 
@@ -124,7 +132,22 @@ docker compose logs -f foro-moderacion     # logs de un servicio
 docker compose down                        # detener todo
 ```
 
-## 4. Verificación realizada en local
+## 4. Verificación realizada
+
+### En Render
+
+Ver [`docs/registros/02_verificacion_render.txt`](docs/registros/02_verificacion_render.txt):
+
+- Los tres microservicios responden en sus URL públicas conectados a
+  **Oracle AI Database 26ai** (`/api/estado`).
+- El frontend responde en todas sus rutas (`/`, `/login`, `/temas/3`,
+  `/admin/usuarios`).
+- La colección de Postman completa (60 peticiones, 108 aserciones) pasa **dos
+  veces seguidas** contra las URL públicas, incluido el baneo, en el que
+  `foro-moderacion` llama a `https://foro-temas.onrender.com` reenviando el
+  token de la moderadora.
+
+### En local
 
 Con las cuatro imágenes construidas desde el código
 (ver [`docs/registros/01_verificacion_docker_compose.txt`](docs/registros/01_verificacion_docker_compose.txt)):
